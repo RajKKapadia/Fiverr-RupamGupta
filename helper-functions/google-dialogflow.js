@@ -39,15 +39,17 @@ const detectIntent = async (queryText, sessionId) => {
 
     try {
         let responses = await sessionClient.detectIntent(request);
-        
+
         let fulfillmentMessages = responses[0].queryResult.fulfillmentMessages;
         let intentName = responses[0].queryResult.intent.displayName;
+        let outputContexts = responses[0].queryResult.outputContexts;
 
         let message = {};
         message['text'] = '';
         message['quickReply'] = [];
         message['intentName'] = intentName;
-        message['linkOutSuggestion'] = []
+        message['outputContexts'] = outputContexts;
+        message['linkOutSuggestion'] = [];
 
         fulfillmentMessages.forEach(m => {
             
