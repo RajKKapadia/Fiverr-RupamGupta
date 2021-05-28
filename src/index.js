@@ -19,13 +19,117 @@ webApp.get('/', (req, res) => {
     res.send(`Hello World.!`);
 });
 
+// Handle userProvidesVideoTypeSV
+const userProvidesVideoTypeSV = (req) => {
+
+    let videoType = req.body.queryResult.parameters.video_type;
+
+    let outString = '';
+    let link = 'https://vdofy.com/sponsored';
+    let title = '';
+
+    if (videoType === 'Gold') {
+        outString += 'You have selected Gold.\nGreat choice.\nTo watch sample video please use the link.';
+        link += '#gold';
+        title += 'Gold video sample';
+    } else if (videoType === 'Platinum') {
+        outString += 'You have selected Platinum.\nGreat choice.\nTo watch sample video please use the link.';
+        link += '#platinum';
+        title += 'Platinum video sample';
+    }
+
+    return {
+        fulfillmentMessages: [
+        {
+            platform: 'ACTIONS_ON_GOOGLE',
+            simpleResponses: {
+                simpleResponses: [
+              {
+                textToSpeech: outString
+              }
+            ]
+          }
+        },
+        {
+            platform: 'ACTIONS_ON_GOOGLE',
+            linkOutSuggestion: {
+                destinationName: title,
+                uri: link
+          }
+        }]
+    }
+};
+
+// Handle userProvideVideoTypePV
+const userProvideVideoTypePV = (req) => {
+
+    let videoType = req.body.queryResult.parameters.video_type;
+
+    let outString = `You have selected ${videoType}.\nGreat choice.\nTo watch sample video please use the link.`;
+    let link = 'https://vdofy.com/';
+    let title = '';
+
+    if (videoType === 'Influencer') {
+        link += 'influencer/';
+        title += 'Influencer video sample';
+    } else if (videoType === 'ImageBased' || videoType === 'HighTouch') {
+        link += 'amazonimagevideos/';
+        title += 'Amazon image video sample';
+    } else if (videoType === 'CustomMade') {
+        link += 'customvideos/';
+        title += 'Custom video sample';
+    }
+
+    return {
+        fulfillmentMessages: [
+        {
+            platform: 'ACTIONS_ON_GOOGLE',
+            simpleResponses: {
+                simpleResponses: [
+              {
+                textToSpeech: outString
+              }
+            ]
+          }
+        },
+        {
+            platform: 'ACTIONS_ON_GOOGLE',
+            linkOutSuggestion: {
+                destinationName: title,
+                uri: link
+          }
+        }]
+    }
+};
+
 // Google Dialogflow Webhook
 webApp.post('/webhook', async (req, res) => {
 
-    let responseText = {};
-    responseText['fulfillmentText'] = 'From the webhook.';
-    res.send(responseText);
+    let action = req.body.queryResult.action;
 
+    let responseData = {};
+
+    if (action === 'userProvidesVideoTypeSV') {
+        responseData = userProvidesVideoTypeSV(req);
+    } else if (action === 'userProvideVideoTypePV') {
+        responseData = userProvideVideoTypePV(req);
+    } else {
+        responseData = {
+            fulfillmentMessages: [
+            {
+                platform: ACTIONS_ON_GOOGLE,
+                simpleResponses: {
+                    simpleResponses: [
+                  {
+                    textToSpeech: `Something is wrong with the chatbot.`
+                  }
+                ]
+              }
+            }]
+        }
+    }
+
+    res.send(responseData);
 });
 
 const GD = require('../helper-functions/google-dialogflow');
@@ -33,7 +137,9 @@ const GD = require('../helper-functions/google-dialogflow');
 const INTENTS = [
     'User Chooses SV Price',
     'User Provides Video Type - PV',
-    'User Provides Video Type - OS'
+    'User Provides Video Type - OS',
+    'User Provides Video Type - SV',
+    'A Plus Catalog'
 ];
 
 // Website widget route
