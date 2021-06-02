@@ -40,23 +40,23 @@ const userProvidesVideoTypeSV = (req) => {
 
     return {
         fulfillmentMessages: [
-        {
-            platform: 'ACTIONS_ON_GOOGLE',
-            simpleResponses: {
-                simpleResponses: [
-              {
-                textToSpeech: outString
-              }
-            ]
-          }
-        },
-        {
-            platform: 'ACTIONS_ON_GOOGLE',
-            linkOutSuggestion: {
-                destinationName: title,
-                uri: link
-          }
-        }]
+            {
+                platform: 'ACTIONS_ON_GOOGLE',
+                simpleResponses: {
+                    simpleResponses: [
+                        {
+                            textToSpeech: outString
+                        }
+                    ]
+                }
+            },
+            {
+                platform: 'ACTIONS_ON_GOOGLE',
+                linkOutSuggestion: {
+                    destinationName: title,
+                    uri: link
+                }
+            }]
     }
 };
 
@@ -82,23 +82,62 @@ const userProvideVideoTypePV = (req) => {
 
     return {
         fulfillmentMessages: [
-        {
-            platform: 'ACTIONS_ON_GOOGLE',
-            simpleResponses: {
-                simpleResponses: [
-              {
-                textToSpeech: outString
-              }
-            ]
-          }
-        },
-        {
-            platform: 'ACTIONS_ON_GOOGLE',
-            linkOutSuggestion: {
-                destinationName: title,
-                uri: link
-          }
-        }]
+            {
+                platform: 'ACTIONS_ON_GOOGLE',
+                simpleResponses: {
+                    simpleResponses: [
+                        {
+                            textToSpeech: outString
+                        }
+                    ]
+                }
+            },
+            {
+                platform: 'ACTIONS_ON_GOOGLE',
+                linkOutSuggestion: {
+                    destinationName: title,
+                    uri: link
+                }
+            }]
+    }
+};
+
+// Handle userProvideVideoTypeOS
+const userProvideVideoTypeOS = (req) => {
+
+    let videoType = req.body.queryResult.parameters.video_type;
+
+    let outString = `You have selected ${videoType}.\nGreat choice.\nTo watch sample video please use the link.`;
+    let link = 'https://vdofy.com/';
+    let title = '';
+
+    if (videoType === 'ReviewVideo') {
+        link += 'review/';
+        title += 'Review video sample';
+    } else if (videoType === '360DegreeVideo') {
+        link += '360videos/';
+        title += '360 video sample';
+    }
+
+    return {
+        fulfillmentMessages: [
+            {
+                platform: 'ACTIONS_ON_GOOGLE',
+                simpleResponses: {
+                    simpleResponses: [
+                        {
+                            textToSpeech: outString
+                        }
+                    ]
+                }
+            },
+            {
+                platform: 'ACTIONS_ON_GOOGLE',
+                linkOutSuggestion: {
+                    destinationName: title,
+                    uri: link
+                }
+            }]
     }
 };
 
@@ -113,19 +152,21 @@ webApp.post('/webhook', async (req, res) => {
         responseData = userProvidesVideoTypeSV(req);
     } else if (action === 'userProvideVideoTypePV') {
         responseData = userProvideVideoTypePV(req);
+    } else if (action === 'userProvideVideoTypeOS') {
+        responseData = userProvideVideoTypeOS(req);
     } else {
         responseData = {
             fulfillmentMessages: [
-            {
-                platform: ACTIONS_ON_GOOGLE,
-                simpleResponses: {
-                    simpleResponses: [
-                  {
-                    textToSpeech: `Something is wrong with the chatbot.`
-                  }
-                ]
-              }
-            }]
+                {
+                    platform: ACTIONS_ON_GOOGLE,
+                    simpleResponses: {
+                        simpleResponses: [
+                            {
+                                textToSpeech: `Something is wrong with the chatbot.`
+                            }
+                        ]
+                    }
+                }]
         }
     }
 
@@ -147,6 +188,10 @@ webApp.get('/website', async (req, res) => {
 
     let text = req.query.text;
     let sessionId = req.query.mysession;
+
+    console.log('A request came.');
+    console.log(`Query text --> ${text}`);
+    console.log(`Session id --> ${sessionId}`);
 
     let intentData = await GD.detectIntent(text, sessionId);
 
@@ -185,6 +230,7 @@ webApp.get('/website', async (req, res) => {
 
         intentData.message['flag'] = 'no';
 
+
         if (INTENTS.includes(intentData.message.intentName)) {
             intentData.message['flag'] = 'yes';
         }
@@ -199,9 +245,23 @@ webApp.get('/website', async (req, res) => {
     } else {
 
         intentData.message['flag'] = 'no';
+        intentData.message['imageFlag'] = 'no';
 
         if (INTENTS.includes(intentData.message.intentName)) {
             intentData.message['flag'] = 'yes';
+        }
+
+        try {
+            let data = JSON.parse(intentData.message.text);
+            console.log(data);
+            intentData.message['imageFlag'] = 'yes';
+            intentData.message['imageData'] = {
+                url: data.url,
+                caption: data.caption
+            };
+            intentData.message.text = data.text;
+        } catch (error) {
+            console.log('Simple Data');
         }
 
         res.setHeader('Access-Control-Allow-Origin', '*');
