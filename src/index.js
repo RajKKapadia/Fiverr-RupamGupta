@@ -65,6 +65,8 @@ const userProvideVideoTypePV = (req) => {
 
     let videoType = req.body.queryResult.parameters.video_type;
 
+    console.log(videoType);
+
     let outString = `You have selected ${videoType}.\nGreat choice.\nTo watch sample video please use the link.`;
     let link = 'https://vdofy.com/';
     let title = '';
@@ -72,12 +74,15 @@ const userProvideVideoTypePV = (req) => {
     if (videoType === 'Influencer') {
         link += 'influencer/';
         title += 'Influencer video sample';
-    } else if (videoType === 'ImageBased' || videoType === 'HighTouch') {
+    } else if (videoType === 'Image based') {
         link += 'amazonimagevideos/';
         title += 'Amazon image video sample';
     } else if (videoType === 'CustomMade') {
         link += 'customvideos/';
         title += 'Custom video sample';
+    } else if (videoType === 'HighTouch') {
+        link += 'hightouch/';
+        title += 'High touch video sample';
     }
 
     return {
@@ -229,10 +234,23 @@ webApp.get('/website', async (req, res) => {
         }
 
         intentData.message['flag'] = 'no';
+        intentData.message['imageFlag'] = 'no';
 
 
         if (INTENTS.includes(intentData.message.intentName)) {
             intentData.message['flag'] = 'yes';
+        }
+
+        try {
+            let data = JSON.parse(intentData.message.text);
+            intentData.message['imageFlag'] = 'yes';
+            intentData.message['imageData'] = {
+                url: data.url,
+                caption: data.caption
+            };
+            intentData.message.text = data.text;
+        } catch (error) {
+
         }
 
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -253,7 +271,6 @@ webApp.get('/website', async (req, res) => {
 
         try {
             let data = JSON.parse(intentData.message.text);
-            console.log(data);
             intentData.message['imageFlag'] = 'yes';
             intentData.message['imageData'] = {
                 url: data.url,
@@ -261,7 +278,7 @@ webApp.get('/website', async (req, res) => {
             };
             intentData.message.text = data.text;
         } catch (error) {
-            console.log('Simple Data');
+
         }
 
         res.setHeader('Access-Control-Allow-Origin', '*');
